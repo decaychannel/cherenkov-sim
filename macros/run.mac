@@ -1,0 +1,23 @@
+# Batch mode macro for running simulations
+# Use this with: ./g4template macros/run.mac
+
+# Initialize kernel
+/run/initialize
+
+# Set verbosity
+/run/verbose 1
+/event/verbose 0
+/tracking/verbose 0
+
+#
+# Particle gun settings
+#
+/gun/particle gamma
+/gun/energy 1 MeV
+/gun/position 0 0 -50 cm
+/gun/direction 0 0 1
+
+#
+# Run simulation
+#
+/run/beamOn 1000

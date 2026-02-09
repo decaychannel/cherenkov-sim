@@ -1,0 +1,60 @@
+# Cherenkov Radiation Simulation - Visualization Macro
+# Optimized for viewing Cherenkov photon cones
+
+# Set verbosity before anything else to suppress info messages
+/control/verbose 0
+/run/verbose 0
+
+# Use single thread for interactive visualization (avoids MT warnings)
+/run/numberOfThreads 1
+
+# Initialize run manager (creates geometry)
+/run/initialize
+
+# Use OpenGL
+/vis/open OGL 800x600-0+0
+
+# Disable trajectory storing warning
+/tracking/storeTrajectory 0
+
+# Set vis verbosity to errors only
+/vis/verbose errors
+
+# Draw geometry
+/vis/drawVolume
+
+# Specify view angle
+/vis/viewer/set/viewpointThetaPhi 45 45 deg
+
+# Draw smooth trajectories at end of event
+/vis/scene/add/trajectories smooth
+
+# Limit stored events to avoid memory warning
+/vis/scene/endOfEventAction accumulate 10
+
+# Set background color
+/vis/viewer/set/background black
+
+# Auto refresh
+/vis/viewer/set/autoRefresh true
+
+# Set drawing style
+/vis/viewer/set/style surface
+/vis/viewer/set/hiddenEdge true
+
+# Trajectory coloring - optimized for Cherenkov radiation
+/vis/modeling/trajectories/create/drawByParticleID
+/vis/modeling/trajectories/drawByParticleID-0/set opticalphoton yellow
+/vis/modeling/trajectories/drawByParticleID-0/set mu- magenta
+/vis/modeling/trajectories/drawByParticleID-0/set mu+ magenta
+/vis/modeling/trajectories/drawByParticleID-0/set gamma green
+/vis/modeling/trajectories/drawByParticleID-0/set e- red
+/vis/modeling/trajectories/drawByParticleID-0/set e+ blue
+
+# Filter: Only show particles with Parent ID = 0 or 1
+# PID=0: primary muon, PID=1: direct products from muon (Cherenkov photons)
+/vis/filtering/trajectories/create/attributeFilter
+/vis/filtering/trajectories/attributeFilter-0/setAttribute PID
+/vis/filtering/trajectories/attributeFilter-0/addValue 0
+/vis/filtering/trajectories/attributeFilter-0/addValue 1
+
