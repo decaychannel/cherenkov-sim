@@ -18,16 +18,16 @@ RunAction::RunAction()
       fNPhotons(0),
       fSumAngle(0.0),
       fSumAngle2(0.0),
-      fSumBetaLen(0.0),
-      fSumLen(0.0)
+      fSumBetaW(0.0),
+      fSumW(0.0)
 {
     // Register accumulables so they are merged across threads automatically
     auto accManager = G4AccumulableManager::Instance();
     accManager->Register(fNPhotons);
     accManager->Register(fSumAngle);
     accManager->Register(fSumAngle2);
-    accManager->Register(fSumBetaLen);
-    accManager->Register(fSumLen);
+    accManager->Register(fSumBetaW);
+    accManager->Register(fSumW);
 }
 
 RunAction::~RunAction()
@@ -41,10 +41,10 @@ void RunAction::AddPhotonAngle(G4double angle)
     fSumAngle2 += angle * angle;
 }
 
-void RunAction::AddBeta(G4double beta, G4double length)
+void RunAction::AddBeta(G4double beta, G4double weight)
 {
-    fSumBetaLen += beta * length;
-    fSumLen     += length;
+    fSumBetaW += beta * weight;
+    fSumW     += weight;
 }
 
 void RunAction::BeginOfRunAction(const G4Run*)
@@ -73,18 +73,19 @@ void RunAction::EndOfRunAction(const G4Run* run)
     G4double rms  = (var > 0.0) ? std::sqrt(var) : 0.0;
 
     // Theoretical Cherenkov angle: cos(theta_c) = 1 / (n * beta).
-    // beta is taken from the primary's actual path-averaged speed in water,
-    // so this stays correct if the beam energy or particle is changed.
+    // beta is the primary's photon-weighted mean speed in water (only the
+    // radiating part of the path), so this stays correct if the beam energy
+    // or particle is changed - including particles that slow below threshold.
     // Water is dispersive (RINDEX runs 1.33 red -> 1.34 blue, see Materials.cc),
     // so we quote a band over that range; the measured mean falls inside it.
     const G4double nLow  = 1.33;   // red end  -> smallest angle
     const G4double nHigh = 1.34;   // blue end -> largest angle
-    G4double totLen   = fSumLen.GetValue();
-    G4double betaMean = (totLen > 0.0) ? fSumBetaLen.GetValue() / totLen : 0.0;
+    G4double totW     = fSumW.GetValue();
+    G4double betaMean = (totW > 0.0) ? fSumBetaW.GetValue() / totW : 0.0;
 
     G4cout << "\n"
            << "========================================================\n"
-           << "        Cherenkov Cone Angle (primary muon only)        \n"
+           << "        Cherenkov Cone Angle (primary particle)         \n"
            << "========================================================\n"
            << "  Events processed     : " << nEvts << "\n"
            << "  Cherenkov photons    : " << n << "\n"
@@ -92,7 +93,7 @@ void RunAction::EndOfRunAction(const G4Run* run)
            << "  RMS spread           : " << rms  / deg << " deg\n"
            << "  --------------------------------------------------    \n";
 
-    if (totLen > 0.0 && nLow * betaMean > 1.0) {
+    if (totW > 0.0 && nLow * betaMean > 1.0) {
         G4double thetaLow  = std::acos(1.0 / (nLow  * betaMean)) / deg;
         G4double thetaHigh = std::acos(1.0 / (nHigh * betaMean)) / deg;
         G4cout << "  Primary mean beta    : " << betaMean << "\n"

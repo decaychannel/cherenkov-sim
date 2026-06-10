@@ -19,10 +19,10 @@ PrimaryGeneratorAction::PrimaryGeneratorAction()
 
     // Default particle settings - Muon for Cherenkov radiation
     G4ParticleTable* particleTable = G4ParticleTable::GetParticleTable();
-    G4ParticleDefinition* particle = particleTable->FindParticle("e-");
+    G4ParticleDefinition* particle = particleTable->FindParticle("pi-");
     
     fParticleGun->SetParticleDefinition(particle);
-    fParticleGun->SetParticleEnergy(10.0*MeV);
+    fParticleGun->SetParticleEnergy(100.0*MeV);
     fParticleGun->SetParticlePosition(G4ThreeVector(0., 0., -50.*cm));
     fParticleGun->SetParticleMomentumDirection(G4ThreeVector(0., 0., 1.));
 }

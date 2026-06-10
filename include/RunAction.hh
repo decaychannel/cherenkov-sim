@@ -25,17 +25,18 @@ public:
     // Called by SteppingAction for every primary-muon Cherenkov photon
     void AddPhotonAngle(G4double angle);   // emission angle in radians
 
-    // Called by SteppingAction for every primary step inside the water, so the
-    // theoretical angle can be derived from the real, path-averaged beam beta.
-    void AddBeta(G4double beta, G4double length);  // beta and step length in water
+    // Called by SteppingAction with the primary's beta in water, weighted by the
+    // number of photons radiated in that step. Photon-weighting means only the
+    // radiating (above-threshold) part of the path enters the theoretical angle.
+    void AddBeta(G4double beta, G4double weight);  // weight = photons in the step
 
 private:
     G4Accumulable<G4int>    fNPhotons;   // number of Cherenkov photons
     G4Accumulable<G4double> fSumAngle;   // sum of emission angles
     G4Accumulable<G4double> fSumAngle2;  // sum of squared angles (for std dev)
 
-    G4Accumulable<G4double> fSumBetaLen; // sum of beta*length (path-weighted)
-    G4Accumulable<G4double> fSumLen;     // sum of step length in water
+    G4Accumulable<G4double> fSumBetaW;   // sum of beta * photon-weight
+    G4Accumulable<G4double> fSumW;       // sum of photon-weight
 };
 
 #endif

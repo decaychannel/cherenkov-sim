@@ -41,10 +41,6 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
     if (!vol || vol->GetName() != "WaterTank")
         return;
 
-    // Record the primary's speed (path-weighted) for the theoretical angle,
-    // valid for any beam energy / particle.
-    fRunAction->AddBeta(step->GetPreStepPoint()->GetBeta(), step->GetStepLength());
-
     // Reference direction = the actual step displacement, which is exactly the
     // particle direction G4Cerenkov uses when sampling photon angles. Measuring
     // against this (not the fixed +z beam axis) stays correct even when the
@@ -54,8 +50,9 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
         return;
     primaryDir = primaryDir.unit();
 
-    // Loop over the Cherenkov photons emitted during this step and record the
-    // angle between each photon and the primary's instantaneous direction.
+    // Loop over the Cherenkov photons emitted during this step: record each
+    // photon's angle to the primary's instantaneous direction, and count them.
+    G4int nCkv = 0;
     const std::vector<const G4Track*>* secondaries = step->GetSecondaryInCurrentStep();
     for (const G4Track* sec : *secondaries) {
         if (sec->GetDefinition() != G4OpticalPhoton::OpticalPhotonDefinition())
@@ -67,5 +64,16 @@ void SteppingAction::UserSteppingAction(const G4Step* step)
 
         G4double angle = sec->GetMomentumDirection().angle(primaryDir);
         fRunAction->AddPhotonAngle(angle);
+        ++nCkv;
+    }
+
+    // Feed the primary's beta to the theory, weighted by the photons it radiated
+    // this step. Use the step-averaged beta (the same value G4Cerenkov uses to
+    // sample the photon angles). Sub-threshold steps emit nothing (nCkv == 0)
+    // and are excluded, so the theory reflects only the radiating part of path.
+    if (nCkv > 0) {
+        G4double beta = 0.5 * (step->GetPreStepPoint()->GetBeta() +
+                               step->GetPostStepPoint()->GetBeta());
+        fRunAction->AddBeta(beta, nCkv);
     }
 }
